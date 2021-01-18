@@ -18,6 +18,9 @@ package io.quarkus.myfaces.deployment;
 import java.io.IOException;
 import java.util.Optional;
 
+import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
+import javax.enterprise.context.SessionScoped;
 import javax.faces.application.ProjectStage;
 import javax.faces.application.StateManager;
 import javax.faces.application.ViewHandler;
@@ -155,8 +158,7 @@ class MyFacesProcessor {
 
     @BuildStep
     void buildCdiScopes(BuildProducer<ContextRegistrarBuildItem> contextRegistrar) throws IOException {
-
-        contextRegistrar.produce(new ContextRegistrarBuildItem(new ContextRegistrar() {
+        ContextRegistrar registrar = new ContextRegistrar() {
             @Override
             public void register(ContextRegistrar.RegistrationContext registrationContext) {
                 registrationContext.configure(ViewScoped.class).normal().contextClass(QuarkusViewScopeContext.class).done();
@@ -166,7 +168,10 @@ class MyFacesProcessor {
                 registrationContext.configure(FlowScoped.class).normal()
                         .contextClass(QuarkusFlowScopedContext.class).done();
             }
-        }));
+        };
+        ContextRegistrarBuildItem ctx = new ContextRegistrarBuildItem(registrar, ApplicationScoped.class, SessionScoped.class,
+                ViewScoped.class, RequestScoped.class);
+        contextRegistrar.produce(ctx);
     }
 
     @BuildStep
